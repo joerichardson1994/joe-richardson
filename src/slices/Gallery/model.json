@@ -1,0 +1,45 @@
+{
+  "id": "gallery",
+  "type": "SharedSlice",
+  "name": "Gallery",
+  "description": "The full-bleed swipeable image gallery used on project pages (single view + thumbnail strip).",
+  "variations": [
+    {
+      "id": "default",
+      "name": "Default",
+      "docURL": "...",
+      "version": "initial",
+      "description": "Default",
+      "primary": {},
+      "items": {
+        "image": {
+          "type": "Image",
+          "config": {
+            "label": "Image",
+            "constraint": {},
+            "thumbnails": [
+              {
+                "name": "LowRes",
+                "width": 60
+              }
+            ]
+          }
+        },
+        "caption": {
+          "type": "Text",
+          "config": {
+            "label": "Caption (optional)",
+            "placeholder": "Shown under the thumbnail on hover, if used"
+          }
+        },
+        "alt": {
+          "type": "Text",
+          "config": {
+            "label": "Alt text",
+            "placeholder": "For accessibility / SEO"
+          }
+        }
+      }
+    }
+  ]
+}

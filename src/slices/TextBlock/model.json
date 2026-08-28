@@ -1,0 +1,49 @@
+{
+  "id": "text_block",
+  "type": "SharedSlice",
+  "name": "TextBlock",
+  "description": "A block of rich text, e.g. project write-up or an editorial pull-quote.",
+  "variations": [
+    {
+      "id": "default",
+      "name": "Default",
+      "docURL": "...",
+      "version": "initial",
+      "description": "Default",
+      "primary": {
+        "content": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Content",
+            "multi": "paragraph,strong,em,hyperlink,heading2,heading3"
+          }
+        }
+      },
+      "items": {}
+    },
+    {
+      "id": "pullQuote",
+      "name": "Pull Quote",
+      "docURL": "...",
+      "version": "initial",
+      "description": "Large centred quote treatment",
+      "primary": {
+        "content": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Quote",
+            "single": "paragraph"
+          }
+        },
+        "attribution": {
+          "type": "Text",
+          "config": {
+            "label": "Attribution",
+            "placeholder": "e.g. Client name"
+          }
+        }
+      },
+      "items": {}
+    }
+  ]
+}

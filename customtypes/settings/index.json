@@ -1,0 +1,52 @@
+{
+  "id": "settings",
+  "label": "Site Settings",
+  "repeatable": false,
+  "status": true,
+  "json": {
+    "Main": {
+      "site_title": {
+        "config": {
+          "label": "Site Title",
+          "placeholder": "Used as fallback <title> and og:site_name"
+        },
+        "type": "Text"
+      },
+      "default_meta_description": {
+        "config": {
+          "label": "Default Meta Description"
+        },
+        "type": "Text"
+      },
+      "default_og_image": {
+        "config": {
+          "label": "Default Social Share Image",
+          "constraint": {
+            "width": 1200,
+            "height": 630
+          },
+          "thumbnails": []
+        },
+        "type": "Image"
+      },
+      "favicon": {
+        "config": {
+          "label": "Favicon",
+          "constraint": {
+            "width": 512,
+            "height": 512
+          },
+          "thumbnails": []
+        },
+        "type": "Image"
+      },
+      "accent_color": {
+        "config": {
+          "label": "Accent Color (hex)",
+          "placeholder": "#d67742"
+        },
+        "type": "Color"
+      }
+    }
+  }
+}

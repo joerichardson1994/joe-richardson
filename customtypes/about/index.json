@@ -1,0 +1,45 @@
+{
+  "id": "about",
+  "label": "About",
+  "repeatable": false,
+  "status": true,
+  "json": {
+    "Main": {
+      "uid": {
+        "config": {
+          "label": "UID",
+          "placeholder": "about"
+        },
+        "type": "UID"
+      },
+      "portrait": {
+        "config": {
+          "label": "Portrait / Hero Image",
+          "constraint": {},
+          "thumbnails": []
+        },
+        "type": "Image"
+      },
+      "body_text": {
+        "config": {
+          "label": "Body Text",
+          "placeholder": "Bio / about copy",
+          "multi": "paragraph,strong,em,hyperlink,heading3"
+        },
+        "type": "StructuredText"
+      },
+      "meta_title": {
+        "config": {
+          "label": "Meta Title"
+        },
+        "type": "Text"
+      },
+      "meta_description": {
+        "config": {
+          "label": "Meta Description"
+        },
+        "type": "Text"
+      }
+    }
+  }
+}

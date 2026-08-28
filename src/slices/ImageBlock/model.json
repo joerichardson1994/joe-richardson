@@ -1,0 +1,58 @@
+{
+  "id": "image_block",
+  "type": "SharedSlice",
+  "name": "ImageBlock",
+  "description": "A single full-width image, or two images side by side.",
+  "variations": [
+    {
+      "id": "single",
+      "name": "Single Image",
+      "docURL": "...",
+      "version": "initial",
+      "description": "One full-width image",
+      "primary": {
+        "image": {
+          "type": "Image",
+          "config": {
+            "label": "Image",
+            "constraint": {},
+            "thumbnails": []
+          }
+        },
+        "caption": {
+          "type": "Text",
+          "config": {
+            "label": "Caption (optional)"
+          }
+        }
+      },
+      "items": {}
+    },
+    {
+      "id": "sideBySide",
+      "name": "Side by Side",
+      "docURL": "...",
+      "version": "initial",
+      "description": "Two images side by side",
+      "primary": {
+        "image_left": {
+          "type": "Image",
+          "config": {
+            "label": "Left Image",
+            "constraint": {},
+            "thumbnails": []
+          }
+        },
+        "image_right": {
+          "type": "Image",
+          "config": {
+            "label": "Right Image",
+            "constraint": {},
+            "thumbnails": []
+          }
+        }
+      },
+      "items": {}
+    }
+  ]
+}

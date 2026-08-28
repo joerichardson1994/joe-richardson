@@ -1,0 +1,45 @@
+{
+  "id": "project_grid",
+  "type": "SharedSlice",
+  "name": "ProjectGrid",
+  "description": "The animated homepage list + hero image scroller. Leave 'Manual Selection' empty to auto-list every published Project, in Prismic's default order.",
+  "variations": [
+    {
+      "id": "default",
+      "name": "Default",
+      "docURL": "...",
+      "version": "initial",
+      "description": "Default",
+      "primary": {
+        "heading": {
+          "type": "Text",
+          "config": {
+            "label": "Optional Heading",
+            "placeholder": "Leave blank for no heading above the grid"
+          }
+        },
+        "auto_list_all_projects": {
+          "type": "Boolean",
+          "config": {
+            "label": "Auto-list all published Projects",
+            "default_value": true,
+            "placeholder_true": "Yes",
+            "placeholder_false": "No, use manual selection below"
+          }
+        }
+      },
+      "items": {
+        "project": {
+          "type": "Link",
+          "config": {
+            "label": "Project (manual selection, used only if auto-list is off)",
+            "select": "document",
+            "customtypes": [
+              "project"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

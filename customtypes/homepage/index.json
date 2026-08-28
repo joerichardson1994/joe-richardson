@@ -1,0 +1,65 @@
+{
+  "id": "homepage",
+  "label": "Homepage",
+  "repeatable": false,
+  "status": true,
+  "json": {
+    "Main": {
+      "uid": {
+        "config": {
+          "label": "UID",
+          "placeholder": "homepage"
+        },
+        "type": "UID"
+      },
+      "meta_title": {
+        "config": {
+          "label": "Meta Title",
+          "placeholder": "Page title for SEO"
+        },
+        "type": "Text"
+      },
+      "meta_description": {
+        "config": {
+          "label": "Meta Description",
+          "placeholder": "Description for SEO",
+          "multi": false
+        },
+        "type": "Text"
+      },
+      "meta_image": {
+        "config": {
+          "label": "Meta Image",
+          "constraint": {
+            "width": 1200,
+            "height": 630
+          },
+          "thumbnails": []
+        },
+        "type": "Image"
+      },
+      "scroll_message": {
+        "config": {
+          "label": "Mobile scroll hint text",
+          "placeholder": "Scroll to continue"
+        },
+        "type": "Text"
+      }
+    },
+    "SliceZone": {
+      "slices": {
+        "type": "Slices",
+        "fixed": [],
+        "config": {
+          "labels": {},
+          "placeholder": "Add a section",
+          "choices": {
+            "project_grid": {
+              "type": "SharedSlice"
+            }
+          }
+        }
+      }
+    }
+  }
+}

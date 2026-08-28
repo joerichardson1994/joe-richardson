@@ -1,0 +1,39 @@
+{
+  "id": "navigation",
+  "label": "Navigation",
+  "repeatable": false,
+  "status": true,
+  "json": {
+    "Main": {
+      "logo_text": {
+        "config": {
+          "label": "Logo / Site Name",
+          "placeholder": "Shown top-left on every page"
+        },
+        "type": "Text"
+      },
+      "links": {
+        "config": {
+          "label": "Nav Links",
+          "fields": {
+            "label": {
+              "type": "Text",
+              "config": {
+                "label": "Label",
+                "placeholder": "Projects"
+              }
+            },
+            "link": {
+              "type": "Link",
+              "config": {
+                "label": "Link",
+                "placeholder": "/ or /about"
+              }
+            }
+          }
+        },
+        "type": "Group"
+      }
+    }
+  }
+}

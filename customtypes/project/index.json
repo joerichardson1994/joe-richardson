@@ -1,0 +1,114 @@
+{
+  "id": "project",
+  "label": "Project",
+  "repeatable": true,
+  "status": true,
+  "json": {
+    "Main": {
+      "uid": {
+        "config": {
+          "label": "UID",
+          "placeholder": "project-slug"
+        },
+        "type": "UID"
+      },
+      "title": {
+        "config": {
+          "label": "Title",
+          "placeholder": "Project name shown in listings and headings"
+        },
+        "type": "Text"
+      },
+      "subtitle": {
+        "config": {
+          "label": "Subtitle",
+          "placeholder": "Optional context line under the title, e.g. a location"
+        },
+        "type": "Text"
+      },
+      "category": {
+        "config": {
+          "label": "Category",
+          "placeholder": "Used by the homepage category filter",
+          "options": [
+            "Fashion",
+            "Documentary"
+          ],
+          "default_value": "Fashion"
+        },
+        "type": "Select"
+      },
+      "cover_image": {
+        "config": {
+          "label": "Cover Image",
+          "placeholder": "Shown on the homepage hero/scroller. Aim for consistent aspect ratio.",
+          "constraint": {},
+          "thumbnails": [
+            {
+              "name": "Thumb",
+              "width": 800,
+              "height": 1000
+            }
+          ]
+        },
+        "type": "Image"
+      },
+      "description": {
+        "config": {
+          "label": "Short Description",
+          "placeholder": "One or two lines, used in the project info drawer",
+          "single": "paragraph"
+        },
+        "type": "StructuredText"
+      },
+      "credits": {
+        "config": {
+          "label": "Credits",
+          "placeholder": "e.g. Styling, MUA, Client \u2014 one per line",
+          "single": "paragraph,strong,em,hyperlink"
+        },
+        "type": "StructuredText"
+      },
+      "year": {
+        "config": {
+          "label": "Year",
+          "placeholder": "2024"
+        },
+        "type": "Text"
+      },
+      "meta_title": {
+        "config": {
+          "label": "Meta Title"
+        },
+        "type": "Text"
+      },
+      "meta_description": {
+        "config": {
+          "label": "Meta Description"
+        },
+        "type": "Text"
+      }
+    },
+    "SliceZone": {
+      "slices": {
+        "type": "Slices",
+        "fixed": [],
+        "config": {
+          "labels": {},
+          "placeholder": "Add gallery or text content",
+          "choices": {
+            "gallery": {
+              "type": "SharedSlice"
+            },
+            "text_block": {
+              "type": "SharedSlice"
+            },
+            "image_block": {
+              "type": "SharedSlice"
+            }
+          }
+        }
+      }
+    }
+  }
+}
