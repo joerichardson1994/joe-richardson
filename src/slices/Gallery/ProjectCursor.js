@@ -1,45 +1,57 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function ProjectCursor({ containerRef, mode, hasNext, hasPrev }) {
-  const [pos, setPos] = useState({ x: 0, y: 0 });
   const [side, setSide] = useState(null);
   const [visible, setVisible] = useState(false);
+  const dotRef = useRef(null);
+  const mouseRef = useRef({ x: 0, y: 0 });
+  const sideRef = useRef(null);
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
-    function updateFromEvent(clientX, clientY) {
-      const rect = el.getBoundingClientRect();
-      const relX = clientX - rect.left;
-      const relY = clientY - rect.top;
-      setPos({ x: relX, y: relY });
-      setSide(relX < rect.width / 2 ? "left" : "right");
-    }
-
     function onMove(e) {
-      updateFromEvent(e.clientX, e.clientY);
-      setVisible(true);
-    }
-    function onEnter(e) {
-      updateFromEvent(e.clientX, e.clientY);
+      const rect = el.getBoundingClientRect();
+      mouseRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
       setVisible(true);
     }
     function onLeave() {
       setVisible(false);
+      sideRef.current = null;
+      setSide(null);
     }
 
-    el.addEventListener("mouseenter", onEnter);
     el.addEventListener("mousemove", onMove);
     el.addEventListener("mouseleave", onLeave);
+
+    let raf;
+    function loop() {
+      const el2 = containerRef.current;
+      if (el2) {
+        const rect = el2.getBoundingClientRect();
+        const { x, y } = mouseRef.current;
+        const newSide = x < rect.width / 2 ? "left" : "right";
+        if (newSide !== sideRef.current) {
+          sideRef.current = newSide;
+          setSide(newSide);
+        }
+        if (dotRef.current) {
+          dotRef.current.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+        }
+      }
+      raf = requestAnimationFrame(loop);
+    }
+    raf = requestAnimationFrame(loop);
+
     return () => {
-      el.removeEventListener("mouseenter", onEnter);
       el.removeEventListener("mousemove", onMove);
       el.removeEventListener("mouseleave", onLeave);
+      cancelAnimationFrame(raf);
     };
-  }, [containerRef, mode]);
+  }, [containerRef]);
 
   const showLeft = mode === "single" && side === "left" && hasPrev;
   const showRight = mode === "single" && side === "right" && hasNext;
@@ -47,10 +59,7 @@ export default function ProjectCursor({ containerRef, mode, hasNext, hasPrev }) 
   const showClose = mode === "thumbs";
 
   return (
-    <div
-      className={`project_cursor${visible ? " visible" : ""}`}
-      style={{ transform: `translate3d(${pos.x}px, ${pos.y}px, 0)` }}
-    >
+    <div ref={dotRef} className={`project_cursor${visible ? " visible" : ""}`}>
       <div className="cursor cursor--left" style={{ display: showLeft ? "flex" : "none" }}>
         <svg className="icon">
           <use xlinkHref="#chevron-left" />
