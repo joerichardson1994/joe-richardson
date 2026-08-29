@@ -549,21 +549,10 @@ body {
 
 .project_gallery-track {
   position: relative;
-  width: 100%;
-  height: 100%;
 }
 
-.project_gallery-item {
-  position: absolute;
-  top: 0;
-  left: 0;
-  will-change: transform;
-}
 .project_gallery-item .hero {
   display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
 }
 
 .project_gallery-list {
@@ -572,23 +561,22 @@ body {
   overflow: hidden;
 }
 .project_gallery-list .real-item {
-  position: absolute;
-  top: 50%;
-  left: 0;
-  transform-origin: center;
+  position: relative;
+  flex-shrink: 0;
   opacity: 0.5;
   cursor: pointer;
-  transition: opacity 0.3s ease-out;
-  will-change: transform;
+  transition: opacity 0.3s ease-out, filter 0.3s ease-out;
 }
 .project_gallery-list .real-item img {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   pointer-events: none;
 }
-.project_gallery-list .real-item.selected { opacity: 1; }
+.project_gallery-list .real-item.selected {
+  opacity: 1;
+}
 .project_gallery-list .real-item.clickable { pointer-events: auto; }
 
 .project_thumbs-button {
@@ -596,8 +584,22 @@ body {
   right: var(--site-frame-xs);
   bottom: var(--site-frame-xs);
   z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  color: var(--color-black);
 }
-.project_thumbs-button .icon { width: 20px; height: 20px; }
+.project_thumbs-button .icon {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+  display: block;
+}
 
 .project_controls {
   grid-area: footer;

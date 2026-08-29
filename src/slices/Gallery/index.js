@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { PrismicImage } from "@prismicio/react";
-import gsap from "gsap";
 import ProjectCursor from "./ProjectCursor";
 import HeroTransitionOverlay from "@/components/HeroTransitionOverlay";
 
@@ -12,15 +11,21 @@ export default function Gallery({ slice, context }) {
   const [selected, setSelected] = useState(0);
   const [frameSize, setFrameSize] = useState({ width: 0, height: 0 });
   const [hasSwiped, setHasSwiped] = useState(false);
+
   const containerRef = useRef(null);
   const trackRef = useRef(null);
   const firstImageRef = useRef(null);
-  const thumbRefs = useRef({});
+  const dragState = useRef({ startX: 0, startY: 0, startTime: 0, axis: null, dragging: false });
+  const justSwipedRef = useRef(false);
 
   const measure = useCallback(() => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
-    setFrameSize({ width: rect.width, height: rect.height });
+    setFrameSize((prev) =>
+      prev.width === rect.width && prev.height === rect.height
+        ? prev
+        : { width: rect.width, height: rect.height }
+    );
   }, []);
 
   useEffect(() => {
@@ -33,6 +38,11 @@ export default function Gallery({ slice, context }) {
     measure();
   }, [mode, measure]);
 
+  function goTo(index) {
+    if (images.length === 0) return;
+    setSelected((index + images.length) % images.length);
+  }
+
   useEffect(() => {
     function onKeyDown(e) {
       if (e.key === "ArrowRight") goTo(selected + 1);
@@ -42,7 +52,7 @@ export default function Gallery({ slice, context }) {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, mode]);
+  }, [selected, mode, images.length]);
 
   const wheelLockRef = useRef(false);
   useEffect(() => {
@@ -52,8 +62,7 @@ export default function Gallery({ slice, context }) {
     function onWheel(e) {
       e.preventDefault();
       if (wheelLockRef.current) return;
-      const delta =
-        Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+      const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
       if (Math.abs(delta) < 8) return;
       wheelLockRef.current = true;
       delta > 0 ? goTo(selected + 1) : goTo(selected - 1);
@@ -67,75 +76,84 @@ export default function Gallery({ slice, context }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected, images.length]);
 
-  const touchRef = useRef({ startX: 0, startY: 0, startTime: 0, active: false, committed: false });
-  const justSwipedRef = useRef(false);
+  const dragSurfaceRef = useRef(null);
+  const baseOffsetRef = useRef(0);
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el || images.length < 2) return;
-    if (mode !== "single") return;
+
+    function getBaseOffset() {
+      if (mode === "single") return -selected * frameSize.width;
+      return frameSize.width / 2 - (thumbCentersRef.current[selected] || 0);
+    }
 
     function onTouchStart(e) {
       const t = e.touches[0];
-      touchRef.current = {
+      dragState.current = {
         startX: t.clientX,
         startY: t.clientY,
         startTime: Date.now(),
-        active: true,
-        committed: false,
+        axis: null,
+        dragging: false,
       };
-      gsap.killTweensOf(trackRef.current);
+      baseOffsetRef.current = getBaseOffset();
     }
 
     function onTouchMove(e) {
-      if (!touchRef.current.active) return;
       const t = e.touches[0];
-      const dx = t.clientX - touchRef.current.startX;
-      const dy = t.clientY - touchRef.current.startY;
+      const dx = t.clientX - dragState.current.startX;
+      const dy = t.clientY - dragState.current.startY;
 
-      if (!touchRef.current.committed) {
-        if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
-        touchRef.current.committed = Math.abs(dx) > Math.abs(dy) ? "horizontal" : "vertical";
+      if (!dragState.current.axis) {
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+        dragState.current.axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+        if (dragState.current.axis === "x") {
+          dragState.current.dragging = true;
+          setHasSwiped(true);
+          const el = dragSurfaceRef.current;
+          if (el) el.style.transition = "none";
+        }
       }
 
-      if (touchRef.current.committed === "horizontal") {
+      if (dragState.current.axis === "x") {
         e.preventDefault();
-        setHasSwiped(true);
-        if (trackRef.current) {
-          gsap.set(trackRef.current, { x: dx });
+        const el = dragSurfaceRef.current;
+        if (el) {
+          const y = mode === "thumbs" ? ", -50%" : "";
+          el.style.transform = `translate(${baseOffsetRef.current + dx}px${y})`;
         }
       }
     }
 
     function onTouchEnd(e) {
-      if (!touchRef.current.active) return;
-      touchRef.current.active = false;
-      if (touchRef.current.committed !== "horizontal") return;
+      if (dragState.current.axis !== "x") return;
 
       const t = e.changedTouches[0];
-      const dx = t.clientX - touchRef.current.startX;
-      const elapsed = Date.now() - touchRef.current.startTime;
+      const dx = t.clientX - dragState.current.startX;
+      const elapsed = Date.now() - dragState.current.startTime;
       const velocity = Math.abs(dx) / Math.max(elapsed, 1);
-      const isSwipe = Math.abs(dx) > frameSize.width * 0.2 || velocity > 0.5;
+      const threshold = mode === "single" ? frameSize.width * 0.2 : 40;
+      const minVelocity = mode === "single" ? 0.5 : 0.35;
+      const isSwipe = Math.abs(dx) > threshold || velocity > minVelocity;
 
-      if (isSwipe && ((dx < 0 && selected < images.length - 1) || (dx > 0 && selected > 0))) {
-        justSwipedRef.current = true;
-        gsap.to(trackRef.current, {
-          x: dx < 0 ? -frameSize.width : frameSize.width,
-          duration: 0.25,
-          ease: "power2.out",
-          onComplete: () => {
-            gsap.set(trackRef.current, { x: 0 });
-            goTo(selected + (dx < 0 ? 1 : -1));
-          },
-        });
-      } else {
-        gsap.to(trackRef.current, {
-          x: 0,
-          duration: 0.5,
-          ease: "elastic.out(1, 0.65)",
-        });
+      const el = dragSurfaceRef.current;
+      if (el) el.style.transition = "";
+
+      dragState.current.dragging = false;
+
+      if (isSwipe) {
+        if (dx < 0 && selected < images.length - 1) {
+          justSwipedRef.current = true;
+          goTo(selected + 1);
+          return;
+        } else if (dx > 0 && selected > 0) {
+          justSwipedRef.current = true;
+          goTo(selected - 1);
+          return;
+        }
       }
+      if (el) el.style.transform = "";
     }
 
     el.addEventListener("touchstart", onTouchStart, { passive: true });
@@ -148,100 +166,6 @@ export default function Gallery({ slice, context }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected, images.length, mode, frameSize.width]);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el || images.length < 2 || mode !== "thumbs") return;
-
-    function onTouchStart(e) {
-      const t = e.touches[0];
-      touchRef.current = {
-        startX: t.clientX,
-        startY: t.clientY,
-        startTime: Date.now(),
-        active: true,
-        committed: false,
-      };
-    }
-
-    function onTouchMove(e) {
-      if (!touchRef.current.active) return;
-      const t = e.touches[0];
-      const dx = t.clientX - touchRef.current.startX;
-      const dy = t.clientY - touchRef.current.startY;
-      if (!touchRef.current.committed) {
-        if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
-        touchRef.current.committed = Math.abs(dx) > Math.abs(dy) ? "horizontal" : "vertical";
-      }
-      if (touchRef.current.committed === "horizontal") {
-        e.preventDefault();
-      }
-    }
-
-    function onTouchEnd(e) {
-      if (!touchRef.current.active) return;
-      touchRef.current.active = false;
-      if (touchRef.current.committed !== "horizontal") return;
-
-      const t = e.changedTouches[0];
-      const dx = t.clientX - touchRef.current.startX;
-      const elapsed = Date.now() - touchRef.current.startTime;
-      const velocity = Math.abs(dx) / Math.max(elapsed, 1);
-      const isSwipe = Math.abs(dx) > 40 || velocity > 0.4;
-      if (!isSwipe) return;
-
-      justSwipedRef.current = true;
-      if (dx < 0 && selected < images.length - 1) {
-        goTo(selected + 1);
-      } else if (dx > 0 && selected > 0) {
-        goTo(selected - 1);
-      }
-    }
-
-    el.addEventListener("touchstart", onTouchStart, { passive: true });
-    el.addEventListener("touchmove", onTouchMove, { passive: false });
-    el.addEventListener("touchend", onTouchEnd, { passive: true });
-    return () => {
-      el.removeEventListener("touchstart", onTouchStart);
-      el.removeEventListener("touchmove", onTouchMove);
-      el.removeEventListener("touchend", onTouchEnd);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, images.length, mode]);
-
-  const prevModeRef = useRef(mode);
-  useEffect(() => {
-    if (mode !== "thumbs") {
-      prevModeRef.current = mode;
-      return;
-    }
-    const enteringThumbs = prevModeRef.current !== "thumbs";
-    prevModeRef.current = mode;
-
-    const raf = requestAnimationFrame(() => {
-      const layout = getThumbLayout();
-      layout.forEach((l, i) => {
-        const el = thumbRefs.current[i];
-        if (!el) return;
-        const props = {
-          x: Math.round(l.x - l.boxWidth / 2),
-          scale: l.scale,
-        };
-        if (enteringThumbs) {
-          gsap.set(el, props);
-        } else {
-          gsap.to(el, { ...props, duration: 0.4, ease: "power3.out" });
-        }
-      });
-    });
-    return () => cancelAnimationFrame(raf);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, mode, frameSize.width, frameSize.height]);
-
-  function goTo(index) {
-    if (images.length === 0) return;
-    setSelected((index + images.length) % images.length);
-  }
 
   if (images.length === 0) return null;
 
@@ -257,32 +181,31 @@ export default function Gallery({ slice, context }) {
     return { width: Math.round(imgWidth * scale), height: Math.round(imgHeight * scale) };
   }
 
-  const THUMB_HEIGHT_RATIO = 0.35;
-  const THUMB_GAP = 20;
-  const SELECTED_SCALE = 0.75;
-  const OTHER_SCALE = 0.48;
+  const THUMB_HEIGHT = Math.max(Math.round((frameSize.height || 400) * 0.32), 80);
+  const THUMB_GAP = 16;
 
-  function getThumbLayout() {
-    const thumbTargetHeight = frameSize.height * THUMB_HEIGHT_RATIO || 1;
-    let cursor = 0;
-    const layout = images.map((item, i) => {
+  const thumbWidths = useMemo(() => {
+    return images.map((item) => {
       const dims = item.image?.dimensions || { width: 1, height: 1 };
-      const aspect = dims.width / dims.height;
-      const boxWidth = dims.width;
-      const boxHeight = dims.height;
-      const scale = i === selected ? SELECTED_SCALE : OTHER_SCALE;
-      const displayHeight = thumbTargetHeight * scale;
-      const displayWidth = displayHeight * aspect;
-      const centerX = cursor + displayWidth / 2;
-      cursor += displayWidth + THUMB_GAP;
-      return { boxWidth, boxHeight, scale: (displayHeight / boxHeight), centerX, displayWidth };
+      const aspect = dims.width / (dims.height || 1);
+      return Math.max(Math.round(THUMB_HEIGHT * aspect), 20);
     });
-    const selectedCenter = layout[selected]?.centerX || 0;
-    const shift = frameSize.width / 2 - selectedCenter;
-    return layout.map((l) => ({ ...l, x: l.centerX + shift }));
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [images, THUMB_HEIGHT]);
 
-  const thumbLayout = mode === "thumbs" ? getThumbLayout() : [];
+  const thumbCenters = useMemo(() => {
+    let cursor = 0;
+    return thumbWidths.map((w) => {
+      const center = cursor + w / 2;
+      cursor += w + THUMB_GAP;
+      return center;
+    });
+  }, [thumbWidths]);
+
+  const thumbCentersRef = useRef(thumbCenters);
+  thumbCentersRef.current = thumbCenters;
+
+  const thumbStripOffset = frameSize.width / 2 - (thumbCenters[selected] || 0);
 
   return (
     <div
@@ -300,23 +223,32 @@ export default function Gallery({ slice, context }) {
       }}
     >
       {mode === "single" ? (
-        <div className="project_gallery-track" ref={trackRef}>
+        <div
+          className="project_gallery-track"
+          ref={dragSurfaceRef}
+          style={{
+            transform: `translateX(${-selected * frameSize.width}px)`,
+            transition: "transform 0.4s cubic-bezier(0.22, 1, 0.36, 1)",
+            display: "flex",
+            width: frameSize.width * images.length,
+            height: "100%",
+          }}
+        >
           {images.map((item, i) => {
             const dims = item.image?.dimensions || { width: 0, height: 0 };
             const { width, height } = fittedSize(dims.width, dims.height);
-            const offsetX = (i - selected) * frameSize.width;
-            const left = frameSize.width / 2 - width / 2;
-            const top = frameSize.height / 2 - height / 2;
-
             return (
               <div
                 className="project_gallery-item"
                 key={i}
                 ref={i === 0 ? firstImageRef : undefined}
                 style={{
-                  translate: `${offsetX + left}px ${top}px`,
-                  width: width || undefined,
-                  height: height || undefined,
+                  width: frameSize.width || "100%",
+                  height: "100%",
+                  flexShrink: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
                 <PrismicImage
@@ -327,7 +259,13 @@ export default function Gallery({ slice, context }) {
                   height={height || undefined}
                   loading="eager"
                   style={{
-                    aspectRatio: dims.width && dims.height ? `${dims.width} / ${dims.height}` : undefined,
+                    width: width || undefined,
+                    height: height || undefined,
+                    maxWidth: "100%",
+                    maxHeight: "100%",
+                    objectFit: "contain",
+                    aspectRatio:
+                      dims.width && dims.height ? `${dims.width} / ${dims.height}` : undefined,
                   }}
                 />
               </div>
@@ -336,37 +274,53 @@ export default function Gallery({ slice, context }) {
         </div>
       ) : (
         <div className="project_gallery-list visible">
-          {images.map((item, i) => {
-            const layout = thumbLayout[i] || { boxWidth: 0, boxHeight: 0, scale: 1, x: 0 };
-            return (
+          <div
+            ref={dragSurfaceRef}
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: 0,
+              display: "flex",
+              alignItems: "center",
+              gap: THUMB_GAP,
+              transform: `translate(${thumbStripOffset}px, -50%)`,
+              transition: "transform 0.4s cubic-bezier(0.22, 1, 0.36, 1)",
+            }}
+          >
+            {images.map((item, i) => (
               <div
-                className={`real-item${i === selected ? " selected" : ""}${images.length > 1 ? " clickable" : ""}`}
                 key={i}
-                ref={(el) => (thumbRefs.current[i] = el)}
+                className={`real-item${i === selected ? " selected" : ""}${
+                  images.length > 1 ? " clickable" : ""
+                }`}
                 style={{
-                  top: "50%",
-                  transform: `translate(${Math.round(layout.x - layout.boxWidth / 2)}px, -50%) scale(${layout.scale})`,
-                  width: layout.boxWidth || undefined,
-                  height: layout.boxHeight || undefined,
+                  position: "static",
+                  width: thumbWidths[i],
+                  height: THUMB_HEIGHT,
+                  flexShrink: 0,
                 }}
                 onClick={() => {
                   if (justSwipedRef.current) {
                     justSwipedRef.current = false;
                     return;
                   }
-                  setSelected(i);
-                  setMode("single");
+                  if (i === selected) {
+                    setMode("single");
+                  } else {
+                    setSelected(i);
+                  }
                 }}
               >
                 <PrismicImage
                   field={item.image}
                   alt={item.alt || ""}
-                  width={layout.boxWidth || undefined}
-                  height={layout.boxHeight || undefined}
+                  width={thumbWidths[i]}
+                  height={THUMB_HEIGHT}
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />
               </div>
-            );
-          })}
+            ))}
+          </div>
         </div>
       )}
 
@@ -393,9 +347,7 @@ export default function Gallery({ slice, context }) {
       />
 
       {images.length > 1 && (
-        <span
-          className={`project_swipe${mode === "single" && !hasSwiped ? " visible" : ""}`}
-        >
+        <span className={`project_swipe${mode === "single" && !hasSwiped ? " visible" : ""}`}>
           Swipe to explore
           <svg className="icon">
             <use xlinkHref="#arrow-down" />
@@ -404,10 +356,7 @@ export default function Gallery({ slice, context }) {
       )}
 
       {context?.projectUid && (
-        <HeroTransitionOverlay
-          projectUid={context.projectUid}
-          targetRef={firstImageRef}
-        />
+        <HeroTransitionOverlay projectUid={context.projectUid} targetRef={firstImageRef} />
       )}
     </div>
   );
