@@ -16,6 +16,18 @@ export default function PageTransition({ children }) {
     }
     if (!containerRef.current) return;
 
+    let hasHeroTransition = false;
+    try {
+      hasHeroTransition = !!sessionStorage.getItem("heroTransition");
+    } catch {
+      hasHeroTransition = false;
+    }
+
+    if (hasHeroTransition) {
+      gsap.set(containerRef.current, { y: 0, autoAlpha: 1 });
+      return;
+    }
+
     gsap.fromTo(
       containerRef.current,
       { y: 40, autoAlpha: 0 },
