@@ -228,7 +228,8 @@ export default function Gallery({ slice, context }) {
           ref={dragSurfaceRef}
           style={{
             transform: `translateX(${-selected * frameSize.width}px)`,
-            transition: "transform 0.4s cubic-bezier(0.22, 1, 0.36, 1)",
+            transition: "transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
+            willChange: "transform",
             display: "flex",
             width: frameSize.width * images.length,
             height: "100%",
@@ -284,7 +285,8 @@ export default function Gallery({ slice, context }) {
               alignItems: "center",
               gap: THUMB_GAP,
               transform: `translate(${thumbStripOffset}px, -50%)`,
-              transition: "transform 0.4s cubic-bezier(0.22, 1, 0.36, 1)",
+              transition: "transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
+              willChange: "transform",
             }}
           >
             {images.map((item, i) => (
