@@ -15,6 +15,7 @@ export default function Gallery({ slice, context }) {
   const containerRef = useRef(null);
   const trackRef = useRef(null);
   const firstImageRef = useRef(null);
+  const thumbRefs = useRef({});
 
   const measure = useCallback(() => {
     if (!containerRef.current) return;
@@ -67,7 +68,8 @@ export default function Gallery({ slice, context }) {
 
   useEffect(() => {
     const el = containerRef.current;
-    if (!el || images.length < 2 || mode !== "single") return;
+    if (!el || images.length < 2) return;
+    if (mode !== "single") return;
 
     function onTouchStart(e) {
       const t = e.touches[0];
@@ -142,6 +144,82 @@ export default function Gallery({ slice, context }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected, images.length, mode, frameSize.width]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || images.length < 2 || mode !== "thumbs") return;
+
+    function onTouchStart(e) {
+      const t = e.touches[0];
+      touchRef.current = {
+        startX: t.clientX,
+        startY: t.clientY,
+        startTime: Date.now(),
+        active: true,
+        committed: false,
+      };
+    }
+
+    function onTouchMove(e) {
+      if (!touchRef.current.active) return;
+      const t = e.touches[0];
+      const dx = t.clientX - touchRef.current.startX;
+      const dy = t.clientY - touchRef.current.startY;
+      if (!touchRef.current.committed) {
+        if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+        touchRef.current.committed = Math.abs(dx) > Math.abs(dy) ? "horizontal" : "vertical";
+      }
+      if (touchRef.current.committed === "horizontal") {
+        e.preventDefault();
+      }
+    }
+
+    function onTouchEnd(e) {
+      if (!touchRef.current.active) return;
+      touchRef.current.active = false;
+      if (touchRef.current.committed !== "horizontal") return;
+
+      const t = e.changedTouches[0];
+      const dx = t.clientX - touchRef.current.startX;
+      const elapsed = Date.now() - touchRef.current.startTime;
+      const velocity = Math.abs(dx) / Math.max(elapsed, 1);
+      const isSwipe = Math.abs(dx) > 40 || velocity > 0.4;
+      if (!isSwipe) return;
+
+      justSwipedRef.current = true;
+      if (dx < 0 && selected < images.length - 1) {
+        goTo(selected + 1);
+      } else if (dx > 0 && selected > 0) {
+        goTo(selected - 1);
+      }
+    }
+
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd, { passive: true });
+    return () => {
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected, images.length, mode]);
+
+  useEffect(() => {
+    if (mode !== "thumbs") return;
+    const layout = getThumbLayout();
+    layout.forEach((l, i) => {
+      const el = thumbRefs.current[i];
+      if (!el) return;
+      gsap.to(el, {
+        x: Math.round(l.x - l.boxWidth / 2),
+        scale: l.scale,
+        duration: 0.4,
+        ease: "power3.out",
+      });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected, mode, frameSize.width, frameSize.height]);
 
   function goTo(index) {
     if (images.length === 0) return;
@@ -227,10 +305,10 @@ export default function Gallery({ slice, context }) {
                 <PrismicImage
                   field={item.image}
                   className="hero"
-                  loading="eager"
                   alt={item.alt || ""}
                   width={width || undefined}
                   height={height || undefined}
+                  loading="eager"
                   style={{
                     aspectRatio: dims.width && dims.height ? `${dims.width} / ${dims.height}` : undefined,
                   }}
@@ -247,13 +325,18 @@ export default function Gallery({ slice, context }) {
               <div
                 className={`real-item${i === selected ? " selected" : ""}${images.length > 1 ? " clickable" : ""}`}
                 key={i}
+                ref={(el) => (thumbRefs.current[i] = el)}
                 style={{
-                  translate: `${Math.round(layout.x - layout.boxWidth / 2)}px -50%`,
-                  scale: layout.scale,
+                  top: "50%",
+                  transform: `translate(${Math.round(layout.x - layout.boxWidth / 2)}px, -50%) scale(${layout.scale})`,
                   width: layout.boxWidth || undefined,
                   height: layout.boxHeight || undefined,
                 }}
                 onClick={() => {
+                  if (justSwipedRef.current) {
+                    justSwipedRef.current = false;
+                    return;
+                  }
                   setSelected(i);
                   setMode("single");
                 }}
