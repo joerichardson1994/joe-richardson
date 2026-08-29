@@ -30,6 +30,10 @@ export default function Gallery({ slice, context }) {
   }, [measure]);
 
   useEffect(() => {
+    measure();
+  }, [mode, measure]);
+
+  useEffect(() => {
     function onKeyDown(e) {
       if (e.key === "ArrowRight") goTo(selected + 1);
       if (e.key === "ArrowLeft") goTo(selected - 1);
@@ -205,19 +209,32 @@ export default function Gallery({ slice, context }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected, images.length, mode]);
 
+  const prevModeRef = useRef(mode);
   useEffect(() => {
-    if (mode !== "thumbs") return;
-    const layout = getThumbLayout();
-    layout.forEach((l, i) => {
-      const el = thumbRefs.current[i];
-      if (!el) return;
-      gsap.to(el, {
-        x: Math.round(l.x - l.boxWidth / 2),
-        scale: l.scale,
-        duration: 0.4,
-        ease: "power3.out",
+    if (mode !== "thumbs") {
+      prevModeRef.current = mode;
+      return;
+    }
+    const enteringThumbs = prevModeRef.current !== "thumbs";
+    prevModeRef.current = mode;
+
+    const raf = requestAnimationFrame(() => {
+      const layout = getThumbLayout();
+      layout.forEach((l, i) => {
+        const el = thumbRefs.current[i];
+        if (!el) return;
+        const props = {
+          x: Math.round(l.x - l.boxWidth / 2),
+          scale: l.scale,
+        };
+        if (enteringThumbs) {
+          gsap.set(el, props);
+        } else {
+          gsap.to(el, { ...props, duration: 0.4, ease: "power3.out" });
+        }
       });
     });
+    return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected, mode, frameSize.width, frameSize.height]);
 
