@@ -38,9 +38,6 @@ body {
   margin: 0;
   touch-action: none;
 }
-@media (hover: hover) and (pointer: fine) {
-  body { cursor: none; }
-}
 html, body {
   height: 100%;
 }
@@ -748,26 +745,6 @@ body {
     right: var(--site-frame-xl);
     bottom: var(--site-frame-xl);
   }
-}
-
-
-/* Site-wide custom cursor */
-.site_cursor {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 8px;
-  height: 8px;
-  margin: -4px 0 0 -4px;
-  border-radius: 50%;
-  background: var(--color-black);
-  pointer-events: none;
-  z-index: var(--z-cursor);
-  opacity: 0;
-  transition: opacity 0.2s ease-out, transform 0.05s linear;
-}
-.site_cursor.visible {
-  opacity: 1;
 }
 
 /* Gallery swipe hint (mobile only) */

@@ -227,6 +227,7 @@ export default function Gallery({ slice, context }) {
                 <PrismicImage
                   field={item.image}
                   className="hero"
+                  loading="eager"
                   alt={item.alt || ""}
                   width={width || undefined}
                   height={height || undefined}
