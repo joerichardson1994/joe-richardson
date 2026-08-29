@@ -3,6 +3,8 @@ import { createClient } from "@/lib/prismicio";
 import { PrismicText } from "@prismicio/react";
 import SiteChrome from "@/components/SiteChrome";
 import IconSprite from "@/components/IconSprite";
+import PageTransition from "@/components/PageTransition";
+import SiteCursor from "@/components/SiteCursor";
 
 export async function generateMetadata() {
   const client = createClient();
@@ -28,6 +30,7 @@ export default async function RootLayout({ children }) {
     <html lang="en">
       <body>
         <IconSprite />
+        <SiteCursor />
         <div className="main_screen">
           <div className="main_wrapper" id="main-wrapper">
             <div className="loader">
@@ -37,7 +40,7 @@ export default async function RootLayout({ children }) {
             <SiteChrome navigation={navigation} settings={settings} />
 
             <div className="main_content" id="nomad-wrapper">
-              {children}
+              <PageTransition>{children}</PageTransition>
             </div>
           </div>
         </div>

@@ -7,18 +7,6 @@ import { useRouter } from "next/navigation";
 import { PrismicImage } from "@prismicio/react";
 import gsap from "gsap";
 
-/**
- * Reimplementation of the original theme's homepage behaviour:
- *  - a scrollable list of project titles
- *  - a large hero image that swaps to match whichever title is
- *    "selected" (hovered on desktop, centred-in-viewport on mobile)
- *  - a category filter (desktop: inline links, mobile: fullscreen dropdown)
- *  - keyboard arrow navigation on desktop
- *
- * This intentionally trades the original's custom Fil Nomad router +
- * hand-rolled scroll physics for plain React state + GSAP tweens, so
- * it's easy to read/maintain, while keeping the same visual behaviour.
- */
 export default function ProjectScroller({ heading, projects, categories }) {
   const router = useRouter();
   const [selected, setSelected] = useState(0);
@@ -28,6 +16,7 @@ export default function ProjectScroller({ heading, projects, categories }) {
 
   const heroRefs = useRef({});
   const listRef = useRef(null);
+  const itemRefs = useRef({});
 
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 768px)");
@@ -42,7 +31,6 @@ export default function ProjectScroller({ heading, projects, categories }) {
     return projects.filter((p) => p.data.category === activeCategory);
   }, [projects, activeCategory]);
 
-  // Ensure `selected` always points at a currently-visible project.
   useEffect(() => {
     if (visibleProjects.length === 0) return;
     const stillVisible = visibleProjects.some(
@@ -54,19 +42,48 @@ export default function ProjectScroller({ heading, projects, categories }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visibleProjects]);
 
-  // Swap the hero image instantly on selection change (no fade).
+  useEffect(() => {
+    if (isDesktop) return;
+    const entries = Object.entries(itemRefs.current).filter(([, el]) => el);
+    if (entries.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (observed) => {
+        let best = null;
+        let bestRatio = 0;
+        observed.forEach((entry) => {
+          if (entry.isIntersecting && entry.intersectionRatio > bestRatio) {
+            bestRatio = entry.intersectionRatio;
+            best = entry.target;
+          }
+        });
+        if (best) {
+          const idx = Number(best.dataset.index);
+          const project = projects[idx];
+          if (project && visibleProjects.includes(project)) {
+            setSelected(idx);
+          }
+        }
+      },
+      {
+        rootMargin: "-45% 0px -45% 0px",
+        threshold: Array.from({ length: 21 }, (_, i) => i / 20),
+      }
+    );
+
+    entries.forEach(([, el]) => observer.observe(el));
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDesktop, visibleProjects]);
+
   useEffect(() => {
     Object.entries(heroRefs.current).forEach(([idx, el]) => {
       if (!el) return;
       const isActive = Number(idx) === selected;
-      gsap.set(el, {
-        autoAlpha: isActive ? 1 : 0,
-        scale: 1,
-      });
+      gsap.set(el, { autoAlpha: isActive ? 1 : 0 });
     });
   }, [selected]);
 
-  // Desktop keyboard nav (Up/Down or Left/Right cycles through visible items)
   useEffect(() => {
     if (!isDesktop) return;
     function onKeyDown(e) {
@@ -105,6 +122,8 @@ export default function ProjectScroller({ heading, projects, categories }) {
               return (
                 <li
                   key={project.id}
+                  ref={(el) => (itemRefs.current[i] = el)}
+                  data-index={i}
                   className={`projects-item${isVisible ? " visible" : ""}${
                     isSelected ? " selected" : ""
                   }`}
@@ -120,7 +139,6 @@ export default function ProjectScroller({ heading, projects, categories }) {
                       href={`/projects/${project.uid}`}
                       onFocus={() => isVisible && setSelected(i)}
                       onClick={(e) => {
-                        // On mobile, first tap selects; second tap (or tap-when-already-selected) navigates.
                         if (!isDesktop && !isSelected) {
                           e.preventDefault();
                           setSelected(i);
@@ -182,9 +200,6 @@ export default function ProjectScroller({ heading, projects, categories }) {
         <span className="scroll-message visible">Scroll to continue</span>
       </div>
 
-      {/* Category filter: rendered via portal-less direct placement.
-          On desktop this renders inline; on mobile it's a fullscreen list.
-          It targets the fixed grid area reserved by SiteChrome. */}
       <CategoryFilter
         categories={categories}
         active={activeCategory}
@@ -220,23 +235,23 @@ function CategoryFilter({ categories, active, onChange, open, onToggle }) {
       </button>
       <ul className={`category_filter-list${open ? " visible" : ""}`}>
         <li className="category_filter-item">
-          <a
-            href="javascript:void(0);"
-            className={active === "All" ? "active" : ""}
+          <button
+            type="button"
+            className={active === "All" ? "active" : "inactive"}
             onClick={() => onChange("All")}
           >
             All
-          </a>
+          </button>
         </li>
         {categories.map((cat) => (
           <li className="category_filter-item" key={cat}>
-            <a
-              href="javascript:void(0);"
-              className={active === cat ? "active" : ""}
+            <button
+              type="button"
+              className={active === cat ? "active" : "inactive"}
               onClick={() => onChange(cat)}
             >
               {cat}
-            </a>
+            </button>
           </li>
         ))}
       </ul>
@@ -245,8 +260,6 @@ function CategoryFilter({ categories, active, onChange, open, onToggle }) {
 
   if (!mountEl) return null;
 
-  // Mirror markup into the fixed-position mount point declared in SiteChrome,
-  // and toggle the `.disabled` class Prismic/CSS expects for visibility.
   mountEl.classList.toggle("disabled", categories.length === 0);
 
   return createPortal(content, mountEl);

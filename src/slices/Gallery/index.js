@@ -2,28 +2,18 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { PrismicImage } from "@prismicio/react";
+import gsap from "gsap";
 import ProjectCursor from "./ProjectCursor";
 import HeroTransitionOverlay from "@/components/HeroTransitionOverlay";
 
-/**
- * Gallery - project page slice.
- *
- * Single view: each image explicitly sized in JS to fit the frame
- * (preserving aspect ratio), absolutely positioned, sliding via a
- * pixel transform.
- *
- * Thumbnail view: mirrors the reference theme's filmstrip - each
- * item is a fixed-size box (the image's natural intrinsic size)
- * centered inside a wrapper, and the wrapper itself is scaled down
- * and translated along the strip. The selected thumbnail renders
- * larger (scale 0.75) than the rest (scale 0.48).
- */
 export default function Gallery({ slice, context }) {
   const images = slice.items || [];
   const [mode, setMode] = useState("single");
   const [selected, setSelected] = useState(0);
   const [frameSize, setFrameSize] = useState({ width: 0, height: 0 });
+  const [hasSwiped, setHasSwiped] = useState(false);
   const containerRef = useRef(null);
+  const trackRef = useRef(null);
   const firstImageRef = useRef(null);
 
   const measure = useCallback(() => {
@@ -72,6 +62,87 @@ export default function Gallery({ slice, context }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected, images.length]);
 
+  const touchRef = useRef({ startX: 0, startY: 0, startTime: 0, active: false, committed: false });
+  const justSwipedRef = useRef(false);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || images.length < 2 || mode !== "single") return;
+
+    function onTouchStart(e) {
+      const t = e.touches[0];
+      touchRef.current = {
+        startX: t.clientX,
+        startY: t.clientY,
+        startTime: Date.now(),
+        active: true,
+        committed: false,
+      };
+      gsap.killTweensOf(trackRef.current);
+    }
+
+    function onTouchMove(e) {
+      if (!touchRef.current.active) return;
+      const t = e.touches[0];
+      const dx = t.clientX - touchRef.current.startX;
+      const dy = t.clientY - touchRef.current.startY;
+
+      if (!touchRef.current.committed) {
+        if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+        touchRef.current.committed = Math.abs(dx) > Math.abs(dy) ? "horizontal" : "vertical";
+      }
+
+      if (touchRef.current.committed === "horizontal") {
+        e.preventDefault();
+        setHasSwiped(true);
+        if (trackRef.current) {
+          gsap.set(trackRef.current, { x: dx });
+        }
+      }
+    }
+
+    function onTouchEnd(e) {
+      if (!touchRef.current.active) return;
+      touchRef.current.active = false;
+      if (touchRef.current.committed !== "horizontal") return;
+
+      const t = e.changedTouches[0];
+      const dx = t.clientX - touchRef.current.startX;
+      const elapsed = Date.now() - touchRef.current.startTime;
+      const velocity = Math.abs(dx) / Math.max(elapsed, 1);
+      const isSwipe = Math.abs(dx) > frameSize.width * 0.2 || velocity > 0.5;
+
+      if (isSwipe && ((dx < 0 && selected < images.length - 1) || (dx > 0 && selected > 0))) {
+        justSwipedRef.current = true;
+        gsap.to(trackRef.current, {
+          x: dx < 0 ? -frameSize.width : frameSize.width,
+          duration: 0.25,
+          ease: "power2.out",
+          onComplete: () => {
+            gsap.set(trackRef.current, { x: 0 });
+            goTo(selected + (dx < 0 ? 1 : -1));
+          },
+        });
+      } else {
+        gsap.to(trackRef.current, {
+          x: 0,
+          duration: 0.5,
+          ease: "elastic.out(1, 0.65)",
+        });
+      }
+    }
+
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd, { passive: true });
+    return () => {
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected, images.length, mode, frameSize.width]);
+
   function goTo(index) {
     if (images.length === 0) return;
     setSelected((index + images.length) % images.length);
@@ -91,10 +162,6 @@ export default function Gallery({ slice, context }) {
     return { width: Math.round(imgWidth * scale), height: Math.round(imgHeight * scale) };
   }
 
-  // --- Thumbnail filmstrip layout ---
-  // Each thumbnail box is a fraction of the frame height (like the
-  // reference theme's ~35% of viewport height), and items are laid
-  // out left-to-right with a gap, centered around the selected item.
   const THUMB_HEIGHT_RATIO = 0.35;
   const THUMB_GAP = 20;
   const SELECTED_SCALE = 0.75;
@@ -115,7 +182,6 @@ export default function Gallery({ slice, context }) {
       cursor += displayWidth + THUMB_GAP;
       return { boxWidth, boxHeight, scale: (displayHeight / boxHeight), centerX, displayWidth };
     });
-    // Recenter the whole strip so the selected item sits in the middle.
     const selectedCenter = layout[selected]?.centerX || 0;
     const shift = frameSize.width / 2 - selectedCenter;
     return layout.map((l) => ({ ...l, x: l.centerX + shift }));
@@ -129,13 +195,17 @@ export default function Gallery({ slice, context }) {
       ref={containerRef}
       onClick={(e) => {
         if (mode !== "single" || images.length < 2) return;
+        if (justSwipedRef.current) {
+          justSwipedRef.current = false;
+          return;
+        }
         const half = frameSize.width / 2;
         const clickX = e.clientX - containerRef.current.getBoundingClientRect().left;
         clickX < half ? goTo(selected - 1) : goTo(selected + 1);
       }}
     >
       {mode === "single" ? (
-        <div className="project_gallery-track">
+        <div className="project_gallery-track" ref={trackRef}>
           {images.map((item, i) => {
             const dims = item.image?.dimensions || { width: 0, height: 0 };
             const { width, height } = fittedSize(dims.width, dims.height);
@@ -149,7 +219,7 @@ export default function Gallery({ slice, context }) {
                 key={i}
                 ref={i === 0 ? firstImageRef : undefined}
                 style={{
-                  transform: `translate3d(${offsetX + left}px, ${top}px, 0)`,
+                  translate: `${offsetX + left}px ${top}px`,
                   width: width || undefined,
                   height: height || undefined,
                 }}
@@ -160,6 +230,9 @@ export default function Gallery({ slice, context }) {
                   alt={item.alt || ""}
                   width={width || undefined}
                   height={height || undefined}
+                  style={{
+                    aspectRatio: dims.width && dims.height ? `${dims.width} / ${dims.height}` : undefined,
+                  }}
                 />
               </div>
             );
@@ -174,7 +247,8 @@ export default function Gallery({ slice, context }) {
                 className={`real-item${i === selected ? " selected" : ""}${images.length > 1 ? " clickable" : ""}`}
                 key={i}
                 style={{
-                  transform: `translate(${Math.round(layout.x - layout.boxWidth / 2)}px, -50%) scale(${layout.scale})`,
+                  translate: `${Math.round(layout.x - layout.boxWidth / 2)}px -50%`,
+                  scale: layout.scale,
                   width: layout.boxWidth || undefined,
                   height: layout.boxHeight || undefined,
                 }}
@@ -216,6 +290,17 @@ export default function Gallery({ slice, context }) {
         hasNext={selected < images.length - 1}
         hasPrev={selected > 0}
       />
+
+      {images.length > 1 && (
+        <span
+          className={`project_swipe${mode === "single" && !hasSwiped ? " visible" : ""}`}
+        >
+          Swipe to explore
+          <svg className="icon">
+            <use xlinkHref="#arrow-down" />
+          </svg>
+        </span>
+      )}
 
       {context?.projectUid && (
         <HeroTransitionOverlay
