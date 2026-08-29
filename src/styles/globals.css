@@ -38,6 +38,9 @@ body {
   margin: 0;
   touch-action: none;
 }
+@media (hover: hover) and (pointer: fine) {
+  body { cursor: none; }
+}
 html, body {
   height: 100%;
 }
@@ -390,6 +393,7 @@ body {
   z-index: 1;
   visibility: hidden;
   cursor: pointer;
+  will-change: transform, opacity;
 }
 .projects-hero.visible {
   opacity: 1;
@@ -777,4 +781,25 @@ body {
 }
 @media (min-width: 768px) {
   .project_swipe { display: none !important; }
+}
+
+
+/* Site-wide custom cursor */
+.site_cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: var(--color-black);
+  pointer-events: none;
+  z-index: var(--z-cursor);
+  opacity: 0;
+  mix-blend-mode: difference;
+  will-change: transform;
+}
+@media (max-width: 767px) {
+  .site_cursor { display: none; }
 }
