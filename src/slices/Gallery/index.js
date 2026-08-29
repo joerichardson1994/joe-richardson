@@ -324,20 +324,18 @@ export default function Gallery({ slice, context }) {
         </div>
       )}
 
-      {images.length > 1 && (
-        <button
-          className="project_thumbs-button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setMode(mode === "single" ? "thumbs" : "single");
-          }}
-          aria-label="Toggle thumbnail view"
-        >
-          <svg className="icon">
-            <use xlinkHref={mode === "single" ? "#grid" : "#close"} />
-          </svg>
-        </button>
-      )}
+      <button
+        className="project_thumbs-button"
+        onClick={(e) => {
+          e.stopPropagation();
+          setMode(mode === "single" ? "thumbs" : "single");
+        }}
+        aria-label="Toggle thumbnail view"
+      >
+        <svg className="icon">
+          <use xlinkHref={mode === "single" ? "#grid" : "#close"} />
+        </svg>
+      </button>
 
       <ProjectCursor
         containerRef={containerRef}
