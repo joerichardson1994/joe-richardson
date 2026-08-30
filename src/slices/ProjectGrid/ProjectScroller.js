@@ -13,6 +13,7 @@ export default function ProjectScroller({ heading, projects, categories }) {
   const [activeCategory, setActiveCategory] = useState("All");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(true);
+  const [hasScrolled, setHasScrolled] = useState(false);
 
   const heroRefs = useRef({});
   const listRef = useRef(null);
@@ -24,6 +25,17 @@ export default function ProjectScroller({ heading, projects, categories }) {
     update();
     mq.addEventListener("change", update);
     return () => mq.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+    function onScroll() {
+      setHasScrolled(true);
+      el.removeEventListener("scroll", onScroll);
+    }
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
   }, []);
 
   const visibleProjects = useMemo(() => {
@@ -209,7 +221,7 @@ export default function ProjectScroller({ heading, projects, categories }) {
           </div>
         ))}
 
-        <span className="scroll-message visible">
+        <span className={`scroll-message${!hasScrolled ? " visible" : ""}`}>
           Scroll to continue
           <svg className="icon">
             <use xlinkHref="#arrow-down" />
