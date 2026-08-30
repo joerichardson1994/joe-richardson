@@ -47,32 +47,38 @@ export default function ProjectScroller({ heading, projects, categories }) {
     const entries = Object.entries(itemRefs.current).filter(([, el]) => el);
     if (entries.length === 0) return;
 
-    const observer = new IntersectionObserver(
-      (observed) => {
-        let best = null;
-        let bestRatio = 0;
-        observed.forEach((entry) => {
-          if (entry.isIntersecting && entry.intersectionRatio > bestRatio) {
-            bestRatio = entry.intersectionRatio;
-            best = entry.target;
+    let observer;
+    const raf = requestAnimationFrame(() => {
+      observer = new IntersectionObserver(
+        (observed) => {
+          let best = null;
+          let bestRatio = 0;
+          observed.forEach((entry) => {
+            if (entry.isIntersecting && entry.intersectionRatio > bestRatio) {
+              bestRatio = entry.intersectionRatio;
+              best = entry.target;
+            }
+          });
+          if (best) {
+            const idx = Number(best.dataset.index);
+            const project = projects[idx];
+            if (project && visibleProjects.includes(project)) {
+              setSelected(idx);
+            }
           }
-        });
-        if (best) {
-          const idx = Number(best.dataset.index);
-          const project = projects[idx];
-          if (project && visibleProjects.includes(project)) {
-            setSelected(idx);
-          }
+        },
+        {
+          rootMargin: "-45% 0px -45% 0px",
+          threshold: Array.from({ length: 21 }, (_, i) => i / 20),
         }
-      },
-      {
-        rootMargin: "-45% 0px -45% 0px",
-        threshold: Array.from({ length: 21 }, (_, i) => i / 20),
-      }
-    );
+      );
+      entries.forEach(([, el]) => observer.observe(el));
+    });
 
-    entries.forEach(([, el]) => observer.observe(el));
-    return () => observer.disconnect();
+    return () => {
+      cancelAnimationFrame(raf);
+      if (observer) observer.disconnect();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDesktop, visibleProjects]);
 
@@ -183,7 +189,7 @@ export default function ProjectScroller({ heading, projects, categories }) {
                       })
                     );
                   } catch {
-                    // sessionStorage unavailable - fall through to plain nav
+                    // sessionStorage unavailable - fall through
                   }
                 }
                 router.push(`/projects/${project.uid}`);
