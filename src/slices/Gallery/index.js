@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { PrismicImage } from "@prismicio/react";
+import gsap from "gsap";
 import ProjectCursor from "./ProjectCursor";
 import HeroTransitionOverlay from "@/components/HeroTransitionOverlay";
 
@@ -11,10 +12,14 @@ export default function Gallery({ slice, context }) {
   const [selected, setSelected] = useState(0);
   const [frameSize, setFrameSize] = useState({ width: 0, height: 0 });
   const [hasSwiped, setHasSwiped] = useState(false);
+  const [modeMorph, setModeMorph] = useState(null);
+  const [morphClone, setMorphClone] = useState(null);
 
   const containerRef = useRef(null);
   const trackRef = useRef(null);
   const firstImageRef = useRef(null);
+  const currentImageRef = useRef(null);
+  const thumbItemRefs = useRef({});
   const dragState = useRef({ startX: 0, startY: 0, startTime: 0, axis: null, dragging: false });
   const justSwipedRef = useRef(false);
 
@@ -282,7 +287,10 @@ export default function Gallery({ slice, context }) {
                 }}
               >
                 <div
-                  ref={i === 0 ? firstImageRef : undefined}
+                  ref={(el) => {
+                    if (i === 0) firstImageRef.current = el;
+                    if (i === selected) currentImageRef.current = el;
+                  }}
                   style={{
                     width: width || undefined,
                     height: height || undefined,
@@ -330,6 +338,7 @@ export default function Gallery({ slice, context }) {
             {images.map((item, i) => (
               <div
                 key={i}
+                ref={(el) => (thumbItemRefs.current[i] = el)}
                 className={`real-item${i === selected ? " selected" : ""}${
                   images.length > 1 ? " clickable" : ""
                 }`}
@@ -368,7 +377,20 @@ export default function Gallery({ slice, context }) {
         className="project_thumbs-button"
         onClick={(e) => {
           e.stopPropagation();
-          setMode(mode === "single" ? "thumbs" : "single");
+          if (mode === "single") {
+            const el = currentImageRef.current;
+            const imgEl = el?.querySelector("img");
+            if (el && imgEl) {
+              const rect = el.getBoundingClientRect();
+              setModeMorph({
+                src: imgEl.currentSrc || imgEl.src,
+                rect: { top: rect.top, left: rect.left, width: rect.width, height: rect.height },
+              });
+            }
+            setMode("thumbs");
+          } else {
+            setMode("single");
+          }
         }}
         aria-label="Toggle thumbnail view"
       >
@@ -395,6 +417,29 @@ export default function Gallery({ slice, context }) {
 
       {context?.projectUid && (
         <HeroTransitionOverlay projectUid={context.projectUid} targetRef={firstImageRef} />
+      )}
+
+      {morphClone && (
+        <div
+          id="gallery-mode-morph-clone"
+          style={{
+            position: "fixed",
+            top: morphClone.rect.top,
+            left: morphClone.rect.left,
+            width: morphClone.rect.width,
+            height: morphClone.rect.height,
+            zIndex: 10,
+            overflow: "hidden",
+            pointerEvents: "none",
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={morphClone.src}
+            alt=""
+            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+          />
+        </div>
       )}
     </div>
   );
