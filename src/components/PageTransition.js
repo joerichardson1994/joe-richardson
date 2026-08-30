@@ -30,12 +30,12 @@ export default function PageTransition({ children }) {
 
     gsap.fromTo(
       containerRef.current,
-      { y: 40, autoAlpha: 0 },
+      { y: 60, autoAlpha: 0 },
       {
         y: 0,
         autoAlpha: 1,
-        duration: 0.6,
-        ease: "cubic-bezier(0.47, 0, 0.23, 1.38)",
+        duration: 1.4,
+        ease: "cubic-bezier(0.34, 0, 0.2, 1.6)",
       }
     );
   }, [pathname]);
