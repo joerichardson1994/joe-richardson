@@ -137,23 +137,17 @@ export default function Gallery({ slice, context }) {
       const minVelocity = mode === "single" ? 0.5 : 0.35;
       const isSwipe = Math.abs(dx) > threshold || velocity > minVelocity;
 
+      dragState.current.dragging = false;
       const el = dragSurfaceRef.current;
+
       if (el) el.style.transition = "";
 
-      dragState.current.dragging = false;
-
-      if (isSwipe) {
-        if (dx < 0 && selected < images.length - 1) {
-          justSwipedRef.current = true;
-          goTo(selected + 1);
-          return;
-        } else if (dx > 0 && selected > 0) {
-          justSwipedRef.current = true;
-          goTo(selected - 1);
-          return;
-        }
+      if (isSwipe && ((dx < 0 && selected < images.length - 1) || (dx > 0 && selected > 0))) {
+        justSwipedRef.current = true;
+        goTo(selected + (dx < 0 ? 1 : -1));
+      } else if (el) {
+        el.style.transform = "";
       }
-      if (el) el.style.transform = "";
     }
 
     el.addEventListener("touchstart", onTouchStart, { passive: true });

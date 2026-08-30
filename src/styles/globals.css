@@ -506,7 +506,13 @@ body {
   pointer-events: none;
 }
 
-.project_gallery-wrap { grid-area: middle; height: 100%; }
+.project_gallery-wrap {
+  grid-area: middle;
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
 
 .project_gallery {
   position: relative;
@@ -586,19 +592,24 @@ body {
 .project_gallery-list .real-item.clickable { pointer-events: auto; }
 
 .project_thumbs-button {
-  position: absolute;
-  right: var(--site-frame-xs);
-  bottom: var(--site-frame-xs);
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
-  color: var(--color-black);
+  display: none;
+}
+@media (min-width: 768px) {
+  .project_thumbs-button {
+    position: absolute;
+    right: var(--site-frame-xs);
+    bottom: var(--site-frame-xs);
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+    color: var(--color-black);
+  }
 }
 .project_thumbs-button .icon {
   width: 16px;
