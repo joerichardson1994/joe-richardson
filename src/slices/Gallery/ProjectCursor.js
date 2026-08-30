@@ -6,7 +6,7 @@ export default function ProjectCursor({ containerRef, mode, hasNext, hasPrev }) 
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const [side, setSide] = useState(null);
   const [visible, setVisible] = useState(false);
-  const [overSelectedThumb, setOverSelectedThumb] = useState(false);
+  const [overThumb, setOverThumb] = useState(false);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -22,7 +22,7 @@ export default function ProjectCursor({ containerRef, mode, hasNext, hasPrev }) 
 
       if (mode === "thumbs") {
         const hovered = e.target.closest?.(".real-item");
-        setOverSelectedThumb(!!hovered?.classList.contains("selected"));
+        setOverThumb(!!hovered);
       }
     }
 
@@ -41,8 +41,8 @@ export default function ProjectCursor({ containerRef, mode, hasNext, hasPrev }) 
 
   const showLeft = mode === "single" && side === "left" && hasPrev;
   const showRight = mode === "single" && side === "right" && hasNext;
-  const showClose = mode === "thumbs" && overSelectedThumb;
-  const showOpen = mode === "thumbs" && !overSelectedThumb;
+  const showClose = mode === "thumbs" && !overThumb;
+  const showOpen = mode === "thumbs" && overThumb;
 
   return (
     <div
