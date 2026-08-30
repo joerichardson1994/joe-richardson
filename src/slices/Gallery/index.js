@@ -272,7 +272,6 @@ export default function Gallery({ slice, context }) {
               <div
                 className="project_gallery-item"
                 key={i}
-                ref={i === 0 ? firstImageRef : undefined}
                 style={{
                   width: frameSize.width || "100%",
                   height: "100%",
@@ -282,23 +281,32 @@ export default function Gallery({ slice, context }) {
                   justifyContent: "center",
                 }}
               >
-                <PrismicImage
-                  field={item.image}
-                  className="hero"
-                  alt={item.alt || ""}
-                  width={width || undefined}
-                  height={height || undefined}
-                  loading="eager"
+                <div
+                  ref={i === 0 ? firstImageRef : undefined}
                   style={{
                     width: width || undefined,
                     height: height || undefined,
-                    maxWidth: "100%",
-                    maxHeight: "100%",
-                    objectFit: "contain",
-                    aspectRatio:
-                      dims.width && dims.height ? `${dims.width} / ${dims.height}` : undefined,
+                    display: "flex",
                   }}
-                />
+                >
+                  <PrismicImage
+                    field={item.image}
+                    className="hero"
+                    alt={item.alt || ""}
+                    width={width || undefined}
+                    height={height || undefined}
+                    loading="eager"
+                    style={{
+                      width: width || undefined,
+                      height: height || undefined,
+                      maxWidth: "100%",
+                      maxHeight: "100%",
+                      objectFit: "contain",
+                      aspectRatio:
+                        dims.width && dims.height ? `${dims.width} / ${dims.height}` : undefined,
+                    }}
+                  />
+                </div>
               </div>
             );
           })}
