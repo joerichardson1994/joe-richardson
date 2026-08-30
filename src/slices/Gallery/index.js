@@ -247,11 +247,16 @@ export default function Gallery({ slice, context }) {
       className={`project_gallery${images.length === 1 ? " no-gallery" : ""}`}
       ref={containerRef}
       onClick={(e) => {
-        if (mode !== "single" || images.length < 2) return;
         if (justSwipedRef.current) {
           justSwipedRef.current = false;
           return;
         }
+        if (mode === "thumbs") {
+          const hitThumb = e.target.closest?.(".real-item");
+          if (!hitThumb) setMode("single");
+          return;
+        }
+        if (images.length < 2) return;
         const half = frameSize.width / 2;
         const clickX = e.clientX - containerRef.current.getBoundingClientRect().left;
         clickX < half ? goTo(selected - 1) : goTo(selected + 1);
