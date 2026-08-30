@@ -34,8 +34,8 @@ export default function PageTransition({ children }) {
       {
         y: 0,
         autoAlpha: 1,
-        duration: 0.7,
-        ease: "back.out(1.4)",
+        duration: 0.6,
+        ease: "cubic-bezier(0.47, 0, 0.23, 1.38)",
       }
     );
   }, [pathname]);
