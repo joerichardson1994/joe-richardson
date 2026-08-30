@@ -44,7 +44,7 @@ export default function HeroTransitionOverlay({ projectUid, targetRef }) {
         left: targetRect.left,
         width: targetRect.width,
         height: targetRect.height,
-        duration: 1.1,
+        duration: 1.6,
         ease: "cubic-bezier(0.34, 0, 0.2, 1.6)",
         onComplete: () => setReady(true),
       });
