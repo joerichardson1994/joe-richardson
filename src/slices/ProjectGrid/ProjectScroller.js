@@ -42,42 +42,48 @@ export default function ProjectScroller({ heading, projects, categories }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visibleProjects]);
 
+  const hasScrolledRef = useRef(false);
   useEffect(() => {
     if (isDesktop) return;
     const entries = Object.entries(itemRefs.current).filter(([, el]) => el);
     if (entries.length === 0) return;
+    const listEl = listRef.current;
 
-    let observer;
-    const raf = requestAnimationFrame(() => {
-      observer = new IntersectionObserver(
-        (observed) => {
-          let best = null;
-          let bestRatio = 0;
-          observed.forEach((entry) => {
-            if (entry.isIntersecting && entry.intersectionRatio > bestRatio) {
-              bestRatio = entry.intersectionRatio;
-              best = entry.target;
-            }
-          });
-          if (best) {
-            const idx = Number(best.dataset.index);
-            const project = projects[idx];
-            if (project && visibleProjects.includes(project)) {
-              setSelected(idx);
-            }
+    function onScroll() {
+      hasScrolledRef.current = true;
+    }
+    if (listEl) listEl.addEventListener("scroll", onScroll, { passive: true });
+
+    const observer = new IntersectionObserver(
+      (observed) => {
+        if (!hasScrolledRef.current) return;
+        let best = null;
+        let bestRatio = 0;
+        observed.forEach((entry) => {
+          if (entry.isIntersecting && entry.intersectionRatio > bestRatio) {
+            bestRatio = entry.intersectionRatio;
+            best = entry.target;
           }
-        },
-        {
-          rootMargin: "-45% 0px -45% 0px",
-          threshold: Array.from({ length: 21 }, (_, i) => i / 20),
+        });
+        if (best) {
+          const idx = Number(best.dataset.index);
+          const project = projects[idx];
+          if (project && visibleProjects.includes(project)) {
+            setSelected(idx);
+          }
         }
-      );
-      entries.forEach(([, el]) => observer.observe(el));
-    });
+      },
+      {
+        rootMargin: "-45% 0px -45% 0px",
+        threshold: Array.from({ length: 21 }, (_, i) => i / 20),
+      }
+    );
+
+    entries.forEach(([, el]) => observer.observe(el));
 
     return () => {
-      cancelAnimationFrame(raf);
-      if (observer) observer.disconnect();
+      if (listEl) listEl.removeEventListener("scroll", onScroll);
+      observer.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDesktop, visibleProjects]);
