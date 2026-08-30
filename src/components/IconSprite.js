@@ -10,11 +10,6 @@ export default function IconSprite() {
       <symbol viewBox="0 0 6 6" id="chevron-left">
         <path d="M4 6.00015L1 3.00015L4 0L4.70711 0.707107L2.41414 3.00008L4.70711 5.29304L4 6.00015Z" />
       </symbol>
-      <symbol viewBox="0 0 10 10" id="hamburger">
-        <path d="M9 1H1V0H9V1Z" />
-        <path d="M9 5.5H1V4.5H9V5.5Z" />
-        <path d="M1 10H9V9H1V10Z" />
-      </symbol>
       <symbol viewBox="0 0 10 10" id="close">
         <path d="M5.70718 5.00008L9.85367 0.853591L9.14656 0.146484L5.00008 4.29297L0.853591 0.146488L0.146484 0.853594L4.29297 5.00008L0.146563 9.14648L0.85367 9.85359L5.00008 5.70718L9.14649 9.85359L9.85359 9.14649L5.70718 5.00008Z" />
       </symbol>

@@ -202,53 +202,9 @@ body {
   display: flex;
   gap: 24px;
 }
-
-.main_nav-button { display: none; }
-
-.main_nav-layer {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 20;
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  padding: var(--site-frame-xs);
-  width: var(--nav-width);
-  align-items: flex-end;
-  background: var(--color-white);
-  transform: translateX(100%);
-  transition: transform var(--anim-time) var(--anim-spring);
+.nav-item a.active {
+  color: var(--color-orange);
 }
-.main_nav-layer.open {
-  transform: translateX(0);
-}
-.nav-scrim {
-  position: fixed;
-  inset: 0;
-  z-index: 15;
-  background: rgba(0, 0, 0, 0.3);
-}
-@media (min-width: 768px) {
-  .main_nav-layer { padding: var(--site-frame-xl); }
-}
-.main_nav-layer .nav-list {
-  flex: auto;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: space-around;
-}
-.main_nav-layer .nav-item a {
-  font-size: 56px;
-  line-height: 48px;
-  font-weight: 500;
-}
-.main_nav-close .icon { width: 10px; height: 10px; }
 
 /* ==========================================================================
    Category filter
