@@ -111,6 +111,7 @@ export default function Gallery({ slice, context }) {
           setHasSwiped(true);
           const el = dragSurfaceRef.current;
           if (el) el.style.transition = "none";
+          containerRef.current?.classList.add("dragging");
         }
       }
 
@@ -125,7 +126,10 @@ export default function Gallery({ slice, context }) {
     }
 
     function endDrag(clientX) {
-      if (dragState.current.axis !== "x") return;
+      if (dragState.current.axis !== "x") {
+        containerRef.current?.classList.remove("dragging");
+        return;
+      }
 
       const dx = clientX - dragState.current.startX;
       const elapsed = Date.now() - dragState.current.startTime;
@@ -138,6 +142,7 @@ export default function Gallery({ slice, context }) {
       const el = dragSurfaceRef.current;
 
       if (el) el.style.transition = "";
+      containerRef.current?.classList.remove("dragging");
 
       if (isSwipe && ((dx < 0 && selected < images.length - 1) || (dx > 0 && selected > 0))) {
         justSwipedRef.current = true;

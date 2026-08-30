@@ -533,6 +533,11 @@ body {
   background: var(--color-white);
   height: 100%;
   touch-action: pan-y;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.project_gallery.dragging .hero {
+  filter: brightness(0.96);
 }
 @media (min-width: 768px) {
   .project_gallery:not(.no-gallery) { cursor: none; }
