@@ -35,7 +35,6 @@ export default function ProjectCursor({ containerRef, mode, hasNext, hasPrev }) 
 
   const showLeft = mode === "single" && side === "left" && hasPrev;
   const showRight = mode === "single" && side === "right" && hasNext;
-  const showOpen = mode === "single" && side !== null && !showLeft && !showRight;
   const showClose = mode === "thumbs";
 
   return (
@@ -59,12 +58,6 @@ export default function ProjectCursor({ containerRef, mode, hasNext, hasPrev }) 
         <span>close</span>
         <svg className="icon">
           <use xlinkHref="#close" />
-        </svg>
-      </div>
-      <div className="cursor cursor--open" style={{ display: showOpen ? "flex" : "none" }}>
-        <span>open</span>
-        <svg className="icon">
-          <use xlinkHref="#open" />
         </svg>
       </div>
     </div>
