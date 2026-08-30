@@ -88,11 +88,10 @@ export default function Gallery({ slice, context }) {
       return frameSize.width / 2 - (thumbCentersRef.current[selected] || 0);
     }
 
-    function onTouchStart(e) {
-      const t = e.touches[0];
+    function startDrag(clientX, clientY) {
       dragState.current = {
-        startX: t.clientX,
-        startY: t.clientY,
+        startX: clientX,
+        startY: clientY,
         startTime: Date.now(),
         axis: null,
         dragging: false,
@@ -100,10 +99,9 @@ export default function Gallery({ slice, context }) {
       baseOffsetRef.current = getBaseOffset();
     }
 
-    function onTouchMove(e) {
-      const t = e.touches[0];
-      const dx = t.clientX - dragState.current.startX;
-      const dy = t.clientY - dragState.current.startY;
+    function moveDrag(clientX, clientY, preventDefault) {
+      const dx = clientX - dragState.current.startX;
+      const dy = clientY - dragState.current.startY;
 
       if (!dragState.current.axis) {
         if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
@@ -117,7 +115,7 @@ export default function Gallery({ slice, context }) {
       }
 
       if (dragState.current.axis === "x") {
-        e.preventDefault();
+        preventDefault?.();
         const el = dragSurfaceRef.current;
         if (el) {
           const y = mode === "thumbs" ? ", -50%" : "";
@@ -126,11 +124,10 @@ export default function Gallery({ slice, context }) {
       }
     }
 
-    function onTouchEnd(e) {
+    function endDrag(clientX) {
       if (dragState.current.axis !== "x") return;
 
-      const t = e.changedTouches[0];
-      const dx = t.clientX - dragState.current.startX;
+      const dx = clientX - dragState.current.startX;
       const elapsed = Date.now() - dragState.current.startTime;
       const velocity = Math.abs(dx) / Math.max(elapsed, 1);
       const threshold = mode === "single" ? frameSize.width * 0.2 : 40;
@@ -150,13 +147,47 @@ export default function Gallery({ slice, context }) {
       }
     }
 
+    function onTouchStart(e) {
+      const t = e.touches[0];
+      startDrag(t.clientX, t.clientY);
+    }
+    function onTouchMove(e) {
+      const t = e.touches[0];
+      moveDrag(t.clientX, t.clientY, () => e.preventDefault());
+    }
+    function onTouchEnd(e) {
+      const t = e.changedTouches[0];
+      endDrag(t.clientX);
+    }
+
+    let mouseDown = false;
+    function onMouseDown(e) {
+      mouseDown = true;
+      startDrag(e.clientX, e.clientY);
+    }
+    function onMouseMove(e) {
+      if (!mouseDown) return;
+      moveDrag(e.clientX, e.clientY, () => e.preventDefault());
+    }
+    function onMouseUp(e) {
+      if (!mouseDown) return;
+      mouseDown = false;
+      endDrag(e.clientX);
+    }
+
     el.addEventListener("touchstart", onTouchStart, { passive: true });
     el.addEventListener("touchmove", onTouchMove, { passive: false });
     el.addEventListener("touchend", onTouchEnd, { passive: true });
+    el.addEventListener("mousedown", onMouseDown);
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
     return () => {
       el.removeEventListener("touchstart", onTouchStart);
       el.removeEventListener("touchmove", onTouchMove);
       el.removeEventListener("touchend", onTouchEnd);
+      el.removeEventListener("mousedown", onMouseDown);
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected, images.length, mode, frameSize.width]);
@@ -222,7 +253,7 @@ export default function Gallery({ slice, context }) {
           ref={dragSurfaceRef}
           style={{
             transform: `translateX(${-selected * frameSize.width}px)`,
-            transition: "transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
+            transition: "transform 0.6s cubic-bezier(0.47, 0, 0.23, 1.38)",
             willChange: "transform",
             display: "flex",
             width: frameSize.width * images.length,
@@ -279,7 +310,7 @@ export default function Gallery({ slice, context }) {
               alignItems: "center",
               gap: THUMB_GAP,
               transform: `translate(${thumbStripOffset}px, -50%)`,
-              transition: "transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
+              transition: "transform 0.6s cubic-bezier(0.47, 0, 0.23, 1.38)",
               willChange: "transform",
             }}
           >
