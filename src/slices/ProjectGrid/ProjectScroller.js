@@ -209,7 +209,12 @@ export default function ProjectScroller({ heading, projects, categories }) {
           </div>
         ))}
 
-        <span className="scroll-message visible">Scroll to continue</span>
+        <span className="scroll-message visible">
+          Scroll to continue
+          <svg className="icon">
+            <use xlinkHref="#arrow-down" />
+          </svg>
+        </span>
       </div>
 
       <CategoryFilter

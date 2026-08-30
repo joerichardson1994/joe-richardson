@@ -361,10 +361,18 @@ body {
   position: fixed;
   inset: auto 0 0 0;
   z-index: 4;
-  text-align: center;
-  line-height: 1em;
-  margin-bottom: -1em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--color-grey);
+  padding-bottom: var(--site-frame-xs);
   animation: pulsate 1.5s ease-in-out infinite;
+}
+.scroll-message .icon {
+  width: 10px;
+  height: 10px;
+  fill: currentColor;
 }
 .scroll-message.disabled { display: none; }
 @media (min-width: 768px) {
