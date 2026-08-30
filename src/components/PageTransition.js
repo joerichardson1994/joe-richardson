@@ -34,7 +34,7 @@ export default function PageTransition({ children }) {
       {
         y: 0,
         autoAlpha: 1,
-        duration: 1.4,
+        duration: 1.0,
         ease: "cubic-bezier(0.34, 0, 0.2, 1.6)",
       }
     );
