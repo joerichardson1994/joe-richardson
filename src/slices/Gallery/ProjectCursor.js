@@ -6,6 +6,7 @@ export default function ProjectCursor({ containerRef, mode, hasNext, hasPrev }) 
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const [side, setSide] = useState(null);
   const [visible, setVisible] = useState(false);
+  const [overSelectedThumb, setOverSelectedThumb] = useState(false);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -18,6 +19,11 @@ export default function ProjectCursor({ containerRef, mode, hasNext, hasPrev }) 
       setPos({ x: relX, y: relY });
       setSide(relX < rect.width / 2 ? "left" : "right");
       setVisible(true);
+
+      if (mode === "thumbs") {
+        const hovered = e.target.closest?.(".real-item");
+        setOverSelectedThumb(!!hovered?.classList.contains("selected"));
+      }
     }
 
     function onLeave() {
@@ -35,7 +41,8 @@ export default function ProjectCursor({ containerRef, mode, hasNext, hasPrev }) 
 
   const showLeft = mode === "single" && side === "left" && hasPrev;
   const showRight = mode === "single" && side === "right" && hasNext;
-  const showClose = mode === "thumbs";
+  const showClose = mode === "thumbs" && overSelectedThumb;
+  const showOpen = mode === "thumbs" && !overSelectedThumb;
 
   return (
     <div
@@ -58,6 +65,12 @@ export default function ProjectCursor({ containerRef, mode, hasNext, hasPrev }) 
         <span>close</span>
         <svg className="icon">
           <use xlinkHref="#close" />
+        </svg>
+      </div>
+      <div className="cursor cursor--open" style={{ display: showOpen ? "flex" : "none" }}>
+        <span>open</span>
+        <svg className="icon">
+          <use xlinkHref="#grid" />
         </svg>
       </div>
     </div>
