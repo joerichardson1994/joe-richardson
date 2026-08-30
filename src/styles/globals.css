@@ -410,11 +410,10 @@ body {
   overflow-y: auto;
   z-index: 3;
   scrollbar-width: none;
-  scroll-snap-type: y proximity;
 }
 .projects-scroll::-webkit-scrollbar { display: none; }
 @media (min-width: 768px) {
-  .projects-scroll { height: auto; grid-column: 2/7; overflow: visible; scroll-snap-type: none; }
+  .projects-scroll { height: auto; grid-column: 2/7; overflow: visible; }
 }
 
 .projects-list {
@@ -442,7 +441,6 @@ body {
   position: relative;
   transition: opacity 0.3s var(--easing-expo-out);
   opacity: 0.15;
-  scroll-snap-align: center;
 }
 .projects-item.selected {
   opacity: 1;
